@@ -111,7 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NoteWindowControllerDe
         do {
             let root = FileManager.default.temporaryDirectory
                 .appendingPathComponent(UUID().uuidString, isDirectory: true)
-                .appendingPathComponent("Stickies MD", isDirectory: true)
+                .appendingPathComponent("MD Stickies", isDirectory: true)
             try NotesExport.write(controllers.map(\.note), to: root)
             let notesApp = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Notes")
                 ?? URL(fileURLWithPath: "/System/Applications/Notes.app")
@@ -122,7 +122,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NoteWindowControllerDe
         }
     }
 
-    /// About Stickies MD: the version, what it recreates, and who made it.
+    /// About MD Stickies: the version, what it recreates, and who made it.
     @objc func showAbout(_ sender: Any?) {
         NSApp.orderFrontStandardAboutPanel(options: [.credits: Self.aboutCredits])
         NSApp.activate(ignoringOtherApps: true)
@@ -294,7 +294,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NoteWindowControllerDe
         do {
             try store.save(notes: controllers.map(\.note), defaults: defaults, customColors: customColors)
         } catch {
-            NSLog("Stickies MD: save failed: \(error)")
+            NSLog("MD Stickies: save failed: \(error)")
         }
     }
 }

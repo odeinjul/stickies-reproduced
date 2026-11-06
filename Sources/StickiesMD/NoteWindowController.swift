@@ -419,7 +419,7 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSTextVi
         page.sizeToFit()
 
         let operation = NSPrintOperation(view: page, printInfo: info)
-        operation.jobTitle = "Stickies MD"
+        operation.jobTitle = "MD Stickies"
         return operation
     }
 

@@ -1,10 +1,10 @@
 <p align="center"><img src="docs/icon.png" width="128" alt=""></p>
 
-# Stickies MD
+# MD Stickies
 
 Apple's Stickies in Markdown.
 
-![Stickies MD notes on a desktop](docs/preview.png)
+![MD Stickies notes on a desktop](docs/preview.png)
 
 It currently supports almost all functions in macOS's built-in Stickies beside picture and rich text colors.
 

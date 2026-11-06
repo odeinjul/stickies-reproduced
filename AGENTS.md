@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Stickies MD is a native macOS Stickies with Markdown notes: Swift and AppKit, no dependencies.
+MD Stickies is a native macOS Stickies with Markdown notes: Swift and AppKit, no dependencies.
 
 - `Sources/StickiesCore`: notes, Markdown rendering and editing, storage. Covered by tests.
 - `Sources/StickiesMD`: the AppKit app (windows, menus, panels).

@@ -7,14 +7,14 @@ enum MainMenu {
         let fonts = NSFontManager.shared
         let main = NSMenu()
 
-        main.addItem(submenu("Stickies MD", [
-            item("About Stickies MD", #selector(AppDelegate.showAbout(_:))),
+        main.addItem(submenu("MD Stickies", [
+            item("About MD Stickies", #selector(AppDelegate.showAbout(_:))),
             .separator(),
-            item("Hide Stickies MD", #selector(NSApplication.hide(_:)), "h"),
+            item("Hide MD Stickies", #selector(NSApplication.hide(_:)), "h"),
             item("Hide Others", #selector(NSApplication.hideOtherApplications(_:)), "h", [.command, .option]),
             item("Show All", #selector(NSApplication.unhideAllApplications(_:))),
             .separator(),
-            item("Quit Stickies MD", #selector(NSApplication.terminate(_:)), "q"),
+            item("Quit MD Stickies", #selector(NSApplication.terminate(_:)), "q"),
         ]))
 
         main.addItem(submenu("File", [

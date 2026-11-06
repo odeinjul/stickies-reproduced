@@ -7,13 +7,13 @@ import Foundation
 public enum WelcomeNotes {
     static let front = """
         # Make a note of it!
-        Stickies MD keeps notes on your desktop, written in **Markdown**.
+        MD Stickies keeps notes on your desktop, written in **Markdown**.
 
         - [ ] Click a box to tick it
         - Double-click the bar to collapse a note
         - Click the square at the top-left to close it
 
-        Your notes come back each time you open Stickies MD.
+        Your notes come back each time you open MD Stickies.
         """
 
     static let back = """

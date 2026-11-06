@@ -1,6 +1,6 @@
-# Stickies MD — Spec
+# MD Stickies — Spec
 
-Repo: `~/Documents/Work/stickies-reproduced`. App: Stickies MD (`StickiesMD.app`, `local.stickies-md`).
+Repo: `~/Documents/Work/stickies-reproduced`. App: MD Stickies (`MD Stickies.app`, `local.stickies-md`; notes in `~/Library/Application Support/Stickies MD`).
 
 Native macOS (Swift + AppKit) clone of Apple Stickies. Notes are Markdown, rendered Typora style: markers hidden except on the line being edited. No rich-text styling (text colours, kern, outline…).
 Status: spec only, nothing built. Rule: **match native Stickies** wherever it has a behavior. Values marked *measured* come from Stickies' own nib (`SNDocument.nib`) and machine code.
