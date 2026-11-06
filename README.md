@@ -6,7 +6,7 @@ Apple's Stickies in Markdown.
 
 ![Stickies MD notes on a desktop](docs/preview.png)
 
-It looks and behaves like Stickies: small colored notes that sit on your desktop, float on top or fold up into a bar. The difference is that you write in Markdown, it formats as you type, and every note is saved as a plain `.md` file. It doesn't do pictures, text colors or sync.
+It currently supports almost all functions in macOS's built-in Stickies beside picture and rich text colors.
 
 ## Install
 
