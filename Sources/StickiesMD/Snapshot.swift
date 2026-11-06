@@ -39,13 +39,30 @@ enum Snapshot {
             images.append(rep)
         }
         // The first-launch welcome notes.
+        var welcome: [NSBitmapImageRep] = []
         for (index, note) in WelcomeNotes.make(defaults: NoteDefaults(), visible: CGRect(x: 0, y: 0, width: 1440, height: 900))
             .enumerated() {
             let controller = NoteWindowController(note: note)
             controller.forceActive = index == 1
             if let rep = render(controller) {
                 try png(rep).write(to: directory.appendingPathComponent("welcome-\(index).png"))
+                welcome.append(rep)
             }
+        }
+
+        // The README preview: the welcome notes, a Markdown note and a collapsed one on a plain desktop.
+        var green = Note(defaults: NoteDefaults(), frame: CGRect(x: 0, y: 0, width: 300, height: 236), text: markdownSample)
+        green.color = .preset(.green)
+        var purple = Note(defaults: NoteDefaults(), frame: CGRect(x: 0, y: 0, width: 300, height: 200),
+                          text: "Ideas for the weekend")
+        purple.color = .preset(.purple)
+        purple.isCollapsed = true
+        if welcome.count == 2, let greenRep = render(NoteWindowController(note: green)),
+           let purpleRep = render(NoteWindowController(note: purple)) {
+            let layout = [(welcome[0], NSPoint(x: 36, y: 204)), (welcome[1], NSPoint(x: 128, y: 48)),
+                          (greenRep, NSPoint(x: 534, y: 228)), (purpleRep, NSPoint(x: 534, y: 182))]
+            try png(desktop(layout, size: NSSize(width: 870, height: 508)))
+                .write(to: directory.appendingPathComponent("preview.png"))
         }
 
         // Typora style: the same Markdown rendered, then with its second line being edited.
@@ -126,6 +143,33 @@ enum Snapshot {
         }
         NSGraphicsContext.restoreGraphicsState()
         return sheet
+    }
+
+    /// Notes with a window-like shadow on a soft gradient, at the renders' backing scale.
+    private static func desktop(_ notes: [(NSBitmapImageRep, NSPoint)], size: NSSize) -> NSBitmapImageRep {
+        let scale = notes.first.map { CGFloat($0.0.pixelsWide) / $0.0.size.width } ?? 2
+        let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size.width * scale),
+                                   pixelsHigh: Int(size.height * scale), bitsPerSample: 8, samplesPerPixel: 4,
+                                   hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+                                   bytesPerRow: 0, bitsPerPixel: 0)!
+        rep.size = size
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        NSGradient(starting: NSColor(srgbRed: 0.84, green: 0.88, blue: 0.93, alpha: 1),
+                   ending: NSColor(srgbRed: 0.95, green: 0.95, blue: 0.97, alpha: 1))?
+            .draw(in: NSRect(origin: .zero, size: size), angle: 90)
+        for (image, origin) in notes {
+            NSGraphicsContext.saveGraphicsState()
+            let shadow = NSShadow()
+            shadow.shadowOffset = NSSize(width: 0, height: -6)
+            shadow.shadowBlurRadius = 16
+            shadow.shadowColor = NSColor.black.withAlphaComponent(0.25)
+            shadow.set()
+            image.draw(in: NSRect(origin: origin, size: image.size))
+            NSGraphicsContext.restoreGraphicsState()
+        }
+        NSGraphicsContext.restoreGraphicsState()
+        return rep
     }
 
     private static func png(_ rep: NSBitmapImageRep) -> Data {

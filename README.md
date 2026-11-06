@@ -1,12 +1,25 @@
+<p align="center"><img src="docs/icon.png" width="128" alt="Stickies MD icon"></p>
+
 # Stickies MD
 
-A native macOS recreation of Apple's Stickies, with Markdown notes shown Typora style.
+Apple's Stickies, rebuilt natively for macOS, with notes written in Markdown.
 
-```sh
-make run    # build and open build/StickiesMD.app
-make test
-```
+![Stickies MD notes on a desktop](docs/preview.png)
 
-Needs macOS 13+ and Swift (Xcode for `make test`). Notes are saved as Markdown in `~/Library/Application Support/Stickies MD/`. How it matches Stickies: [SPEC.md](SPEC.md).
+**Does**
+- Stickies' notes: six colours, float on top, translucent, collapse, zoom, arrange, find across notes
+- Markdown, previewed as you type: headings, bold, italic, code, links, lists, checkboxes you can click
+- Saves each note as a `.md` file; exports to Markdown, text, RTF or Apple Notes
 
-MIT licensed (see [LICENSE](LICENSE)). Not affiliated with Apple.
+**Doesn't**
+- Rich text: no text colours or per-word fonts
+- Pictures or attachments
+- Sync between Macs
+
+## Install
+
+Download `StickiesMD-0.1.zip` from [Releases](https://github.com/odeinjul/stickies-reproduced/releases) and move the app to Applications. It isn't notarized, so the first time, right-click it and choose Open (or run `xattr -dr com.apple.quarantine /Applications/StickiesMD.app`). Needs macOS 13 or later.
+
+To build it yourself: `make run` (Swift; Xcode for `make test`). How it matches Stickies: [docs/SPEC.md](docs/SPEC.md).
+
+MIT licensed. Not affiliated with Apple.

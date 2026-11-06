@@ -137,52 +137,9 @@ final class SpineView: NSView {
     }
 }
 
-/// Bottom-right resize handle with the clone's three-line resize sign.
-final class GrowView: NSView {
-    var shades: NoteShades { didSet { needsDisplay = true } }
-    private var startFrame = NSRect.zero
-    private var startMouse = NSPoint.zero
-
-    init(frame: NSRect, shades: NoteShades) {
-        self.shades = shades
-        super.init(frame: frame)
-        setAccessibilityElement(true)
-        setAccessibilityLabel("grow area")
-    }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
-
-    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
-
-    override func draw(_ dirtyRect: NSRect) {
-        let width = superview?.bounds.width ?? frame.maxX
-        let path = NSBezierPath()
-        for line in NoteLayout.resizeLines(width: width) {
-            path.move(to: NSPoint(x: line.start.x - frame.minX, y: line.start.y - frame.minY))
-            path.line(to: NSPoint(x: line.end.x - frame.minX, y: line.end.y - frame.minY))
-        }
-        path.lineWidth = 1
-        shades.control.nsColor.setStroke()
-        path.stroke()
-    }
-
-    override func mouseDown(with event: NSEvent) {
-        startFrame = window?.frame ?? .zero
-        startMouse = NSEvent.mouseLocation
-    }
-
-    /// Resizes from the bottom-right; the top-left corner stays put.
-    override func mouseDragged(with event: NSEvent) {
-        let mouse = NSEvent.mouseLocation
-        window?.setFrame(NoteLayout.resized(startFrame, edges: [.right, .bottom],
-                                            dx: mouse.x - startMouse.x, dy: mouse.y - startMouse.y),
-                         display: true)
-    }
-}
-
-/// Invisible strip along one edge of a note; dragging it resizes from that edge,
-/// and near a corner from the neighbouring edge too.
-final class EdgeResizeView: NSView {
+/// Dragging resizes the note from `edges`. Along a single edge, a drag near either
+/// end also moves the neighbouring edge, so the strips work as corners too.
+class ResizeHandle: NSView {
     let edges: ResizeEdges
     private var dragging: ResizeEdges = []
     private var startFrame = NSRect.zero
@@ -195,12 +152,11 @@ final class EdgeResizeView: NSView {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
-    private var isVertical: Bool { edges.contains(.left) || edges.contains(.right) }
-
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     override func resetCursorRects() {
-        addCursorRect(bounds, cursor: isVertical ? .resizeLeftRight : .resizeUpDown)
+        if edges == .left || edges == .right { addCursorRect(bounds, cursor: .resizeLeftRight) }
+        if edges == .top || edges == .bottom { addCursorRect(bounds, cursor: .resizeUpDown) }
     }
 
     override func mouseDown(with event: NSEvent) {
@@ -209,10 +165,10 @@ final class EdgeResizeView: NSView {
         let point = convert(event.locationInWindow, from: nil)
         let corner = NoteLayout.cornerSize
         dragging = edges
-        if isVertical {
+        if edges == .left || edges == .right {
             if point.y < corner { dragging.insert(.bottom) }
             if point.y > bounds.height - corner { dragging.insert(.top) }
-        } else {
+        } else if edges == .top || edges == .bottom {
             if point.x < corner { dragging.insert(.left) }
             if point.x > bounds.width - corner { dragging.insert(.right) }
         }
@@ -223,6 +179,32 @@ final class EdgeResizeView: NSView {
         window?.setFrame(NoteLayout.resized(startFrame, edges: dragging,
                                             dx: mouse.x - startMouse.x, dy: mouse.y - startMouse.y),
                          display: true)
+    }
+}
+
+/// The bottom-right grip, with the clone's three-line resize sign.
+final class GrowView: ResizeHandle {
+    var shades: NoteShades { didSet { needsDisplay = true } }
+
+    init(frame: NSRect, shades: NoteShades) {
+        self.shades = shades
+        super.init(frame: frame, edges: [.right, .bottom])
+        setAccessibilityElement(true)
+        setAccessibilityLabel("grow area")
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    override func draw(_ dirtyRect: NSRect) {
+        let width = superview?.bounds.width ?? frame.maxX
+        let path = NSBezierPath()
+        for line in NoteLayout.resizeLines(width: width) {
+            path.move(to: NSPoint(x: line.start.x - frame.minX, y: line.start.y - frame.minY))
+            path.line(to: NSPoint(x: line.end.x - frame.minX, y: line.end.y - frame.minY))
+        }
+        path.lineWidth = 1
+        shades.control.nsColor.setStroke()
+        path.stroke()
     }
 }
 

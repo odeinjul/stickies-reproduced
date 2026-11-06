@@ -19,7 +19,7 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSTextVi
     let textView: NoteTextView
     private let scrollView: NSScrollView
     private let grow: GrowView
-    private let edgeViews: [EdgeResizeView]
+    private let edgeViews: [ResizeHandle]
     private var preZoomFrame: NSRect?
     private var isApplyingFrame = false
     /// The lines last rendered with their markers showing.
@@ -91,14 +91,14 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSTextVi
 
         let edge = NoteLayout.edgeThickness
         let top = NoteLayout.topEdgeThickness
-        let left = EdgeResizeView(frame: NSRect(x: 0, y: 0, width: edge, height: size.height), edges: .left)
+        let left = ResizeHandle(frame: NSRect(x: 0, y: 0, width: edge, height: size.height), edges: .left)
         left.autoresizingMask = [.height, .maxXMargin]
-        let right = EdgeResizeView(frame: NSRect(x: size.width - edge, y: 0, width: edge, height: size.height),
+        let right = ResizeHandle(frame: NSRect(x: size.width - edge, y: 0, width: edge, height: size.height),
                                    edges: .right)
         right.autoresizingMask = [.height, .minXMargin]
-        let bottom = EdgeResizeView(frame: NSRect(x: 0, y: 0, width: size.width, height: edge), edges: .bottom)
+        let bottom = ResizeHandle(frame: NSRect(x: 0, y: 0, width: size.width, height: edge), edges: .bottom)
         bottom.autoresizingMask = [.width, .maxYMargin]
-        let topEdge = EdgeResizeView(frame: NSRect(x: 0, y: size.height - top, width: size.width, height: top),
+        let topEdge = ResizeHandle(frame: NSRect(x: 0, y: size.height - top, width: size.width, height: top),
                                      edges: .top)
         topEdge.autoresizingMask = [.width, .minYMargin]
         edgeViews = [left, right, bottom, topEdge]
