@@ -38,6 +38,16 @@ enum Snapshot {
             try png(rep).write(to: directory.appendingPathComponent(item.name + ".png"))
             images.append(rep)
         }
+        // The first-launch welcome notes.
+        for (index, note) in WelcomeNotes.make(defaults: NoteDefaults(), visible: CGRect(x: 0, y: 0, width: 1440, height: 900))
+            .enumerated() {
+            let controller = NoteWindowController(note: note)
+            controller.forceActive = index == 1
+            if let rep = render(controller) {
+                try png(rep).write(to: directory.appendingPathComponent("welcome-\(index).png"))
+            }
+        }
+
         // Typora style: the same Markdown rendered, then with its second line being edited.
         for (name, editing) in [("yellow-markdown", nil), ("yellow-markdown-editing", NSRange(location: 12, length: 0))] {
             let note = Note(defaults: NoteDefaults(), frame: CGRect(x: 200, y: 200, width: 300, height: 220),

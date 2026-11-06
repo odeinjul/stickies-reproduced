@@ -163,6 +163,10 @@ All native options keep the file as plain `.md`/`.txt`. No WKWebView, unlike Jot
 
 Editing: Return continues a list, checklist, numbered list or quote (twice ends it); Tab / Shift-Tab nest list lines; Option-Tab starts a list. Export Text…: Markdown as typed, Plain Text / RTF / RTFD as the note looks. Print and Export All to Notes use the rendered note. Older RTF notes convert to Markdown (`MarkdownConverter`) on first launch.
 
+### First launch
+
+Like Stickies, the first launch shows two welcome notes (own wording, in Markdown), placed from Stickies' saved state: a blue "Write in Markdown" note 355 × 268 at (48, top − 40) behind a yellow "Make a note of it!" note 352 × 260, 21 pt right and 22 pt lower. Once anything has been saved they never come back; deleting every note leaves one empty note.
+
 ### Limits
 
 A note holds at most 100,000 characters (`NoteLimits.maxCharacters`, about 5,000 lines): typing past it beeps, a paste that doesn't fit is refused with an explanation, Import Text… cuts a longer file and says so. Deleting always works, so an over-long older note can be trimmed. At the cap typing restyles in under 7 ms; under 1,000 lines in about 0.2 ms.

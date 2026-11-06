@@ -50,6 +50,9 @@ public struct NoteStore {
         textDirectory.appendingPathComponent(id.uuidString + ".md")
     }
 
+    /// False until the first save: the app's first launch.
+    public var hasSavedNotes: Bool { FileManager.default.fileExists(atPath: indexURL.path) }
+
     /// Returns no notes and default settings when nothing has been saved yet.
     public func load() throws -> (notes: [Note], defaults: NoteDefaults) {
         guard FileManager.default.fileExists(atPath: indexURL.path) else { return ([], NoteDefaults()) }

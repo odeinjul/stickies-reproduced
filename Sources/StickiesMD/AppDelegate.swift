@@ -27,7 +27,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NoteWindowControllerDe
             canSave = false
             NSAlert(error: error).runModal()
         }
-        if controllers.isEmpty { addNote(text: "") }
+        if canSave, !store.hasSavedNotes, let visible = NSScreen.main?.visibleFrame {
+            WelcomeNotes.make(defaults: defaults, visible: visible).forEach(show)
+        } else if controllers.isEmpty {
+            addNote(text: "")
+        }
         // Writes notes converted from older .rtf/.txt files out as .md right away.
         scheduleSave()
         NSApp.activate(ignoringOtherApps: true)

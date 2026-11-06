@@ -661,3 +661,25 @@ final class RenameTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: old.path), "never overwrites the new folder")
     }
 }
+
+final class WelcomeTests: XCTestCase {
+    /// Stickies' welcome layout: blue behind at (48, top − 40), yellow in front 21 pt right, 22 pt lower.
+    func testWelcomeNotesFollowStickies() {
+        let visible = CGRect(x: 0, y: 0, width: 1440, height: 900)
+        let notes = WelcomeNotes.make(defaults: NoteDefaults(), visible: visible)
+        XCTAssertEqual(notes.map(\.color), [.preset(.blue), .preset(.yellow)])
+        XCTAssertEqual(notes[0].frame, CGRect(x: 48, y: 592, width: 355, height: 268))
+        XCTAssertEqual(notes[1].frame, CGRect(x: 69, y: 578, width: 352, height: 260))
+        XCTAssertEqual(NoteTitle.of(notes[1].text), "Make a note of it!")
+        XCTAssertTrue(notes.allSatisfy { ($0.text as NSString).length < NoteLimits.maxCharacters })
+    }
+
+    func testFirstLaunchIsBeforeTheFirstSave() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = NoteStore(directory: directory)
+        XCTAssertFalse(store.hasSavedNotes)
+        try store.save(notes: [], defaults: NoteDefaults())
+        XCTAssertTrue(store.hasSavedNotes, "deleting every note later doesn't bring the welcome notes back")
+    }
+}
