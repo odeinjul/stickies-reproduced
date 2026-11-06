@@ -1,25 +1,28 @@
-<p align="center"><img src="docs/icon.png" width="128" alt="Stickies MD icon"></p>
+<p align="center"><img src="docs/icon.png" width="128" alt=""></p>
 
 # Stickies MD
 
-Apple's Stickies, rebuilt natively for macOS, with notes written in Markdown.
+Apple's Stickies, but you write in Markdown.
 
 ![Stickies MD notes on a desktop](docs/preview.png)
 
-**Does**
-- Stickies' notes: six colours, float on top, translucent, collapse, zoom, arrange, find across notes
-- Markdown, previewed as you type: headings, bold, italic, code, links, lists, checkboxes you can click
-- Saves each note as a `.md` file; exports to Markdown, text, RTF or Apple Notes
-
-**Doesn't**
-- Rich text: no text colours or per-word fonts
-- Pictures or attachments
-- Sync between Macs
+It looks and behaves like Stickies: small colored notes that sit on your desktop, float on top or fold up into a bar. The difference is that you write in Markdown, it formats as you type, and every note is saved as a plain `.md` file. It doesn't do pictures, text colors or sync.
 
 ## Install
 
-Download `StickiesMD-0.1.zip` from [Releases](https://github.com/odeinjul/stickies-reproduced/releases) and move the app to Applications. It isn't notarized, so the first time, right-click it and choose Open (or run `xattr -dr com.apple.quarantine /Applications/StickiesMD.app`). Needs macOS 13 or later.
+Get the zip for your Mac (Apple silicon or Intel) from [Releases](https://github.com/odeinjul/stickies-reproduced/releases), unzip it and drag the app to Applications. You need macOS 13 or later.
 
-To build it yourself: `make run` (Swift; Xcode for `make test`). How it matches Stickies: [docs/SPEC.md](docs/SPEC.md).
+The app isn't notarized, so macOS stops it the first time. On macOS 15, click Done, then go to System Settings → Privacy & Security and click Open Anyway. On older versions, right-click the app and choose Open.
+
+## Build
+
+You need Swift (Xcode, or the Command Line Tools). Then:
+
+```sh
+make run     # build the app and open it
+make test    # run the tests (needs Xcode)
+```
+
+[docs/SPEC.md](docs/SPEC.md) explains how it matches Stickies.
 
 MIT licensed. Not affiliated with Apple.

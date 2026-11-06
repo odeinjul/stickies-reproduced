@@ -33,6 +33,22 @@ public struct NoteStore {
         var version = 1
         var defaults: NoteDefaults
         var notes: [Note]
+        /// The Color menu's saved colours (⌘7–⌘0).
+        var customColors: [RGB] = []
+
+        init(defaults: NoteDefaults, notes: [Note], customColors: [RGB]) {
+            self.defaults = defaults
+            self.notes = notes
+            self.customColors = customColors
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            version = try container.decodeIfPresent(Int.self, forKey: .version) ?? 1
+            defaults = try container.decode(NoteDefaults.self, forKey: .defaults)
+            notes = try container.decode([Note].self, forKey: .notes)
+            customColors = try container.decodeIfPresent([RGB].self, forKey: .customColors) ?? []
+        }
     }
 
     var indexURL: URL { directory.appendingPathComponent("notes.json") }
@@ -54,15 +70,15 @@ public struct NoteStore {
     public var hasSavedNotes: Bool { FileManager.default.fileExists(atPath: indexURL.path) }
 
     /// Returns no notes and default settings when nothing has been saved yet.
-    public func load() throws -> (notes: [Note], defaults: NoteDefaults) {
-        guard FileManager.default.fileExists(atPath: indexURL.path) else { return ([], NoteDefaults()) }
+    public func load() throws -> (notes: [Note], defaults: NoteDefaults, customColors: [RGB]) {
+        guard FileManager.default.fileExists(atPath: indexURL.path) else { return ([], NoteDefaults(), []) }
         let index = try JSONDecoder().decode(Index.self, from: Data(contentsOf: indexURL))
         let notes = index.notes.map { note -> Note in
             var note = note
             note.text = text(for: note.id)
             return note
         }
-        return (notes, index.defaults)
+        return (notes, index.defaults, index.customColors)
     }
 
     /// `<id>.md`, else the converted `<id>.rtf`, else `<id>.txt`.
@@ -76,7 +92,7 @@ public struct NoteStore {
     }
 
     /// Writes every note and removes the files of deleted notes.
-    public func save(notes: [Note], defaults: NoteDefaults) throws {
+    public func save(notes: [Note], defaults: NoteDefaults, customColors: [RGB] = []) throws {
         let fm = FileManager.default
         try fm.createDirectory(at: textDirectory, withIntermediateDirectories: true)
         for note in notes {
@@ -90,6 +106,7 @@ public struct NoteStore {
         }
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        try encoder.encode(Index(defaults: defaults, notes: notes)).write(to: indexURL, options: .atomic)
+        try encoder.encode(Index(defaults: defaults, notes: notes, customColors: customColors))
+            .write(to: indexURL, options: .atomic)
     }
 }

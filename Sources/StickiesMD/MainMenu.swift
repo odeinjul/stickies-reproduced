@@ -52,7 +52,7 @@ enum MainMenu {
         // Markdown notes: Bold, Italic, Underline and Strikethrough add markers;
         // the font and size apply to the whole note. No text colours (Markdown has none).
         main.addItem(submenu("Font", [
-            item("Show Fonts", #selector(NSFontManager.orderFrontFontPanel(_:)), "t", target: fonts),
+            item("Show Fonts", #selector(NoteWindowController.showFonts(_:)), "t"),
             item("Bold", #selector(NoteTextView.markdownBold(_:)), "b"),
             item("Italic", #selector(NoteTextView.markdownItalic(_:)), "i"),
             item("Underline", #selector(NoteTextView.markdownUnderline(_:)), "u"),
@@ -64,15 +64,7 @@ enum MainMenu {
                  tag: Int(NSFontAction.sizeDownFontAction.rawValue)),
         ]))
 
-        // Swatch, checkmark on the current colour, ⌘1–⌘6, as in Stickies.
-        var colors = NotePreset.allCases.enumerated().map { index, preset -> NSMenuItem in
-            let colorItem = item(preset.title, #selector(NoteWindowController.setPresetColor(_:)), "\(index + 1)",
-                                 tag: index)
-            colorItem.image = swatch(preset.shades)
-            return colorItem
-        }
-        colors += [.separator(), item("Customize Color…", #selector(NoteWindowController.customizeColor(_:)))]
-        main.addItem(submenu("Color", colors))
+        main.addItem(submenu("Color", colorItems(custom: [])))
 
         let window = submenu("Window", [
             item("Collapse", #selector(NoteWindowController.toggleCollapse(_:)), "m"),
@@ -94,6 +86,33 @@ enum MainMenu {
         NSApp.windowsMenu = window.submenu
 
         return main
+    }
+
+    /// Presets on ⌘1–⌘6 as in Stickies, then the saved colours on ⌘7–⌘0, each with a
+    /// swatch; New Color…, and Edit / Remove submenus for the saved ones.
+    static func colorItems(custom: [RGB]) -> [NSMenuItem] {
+        var items = NotePreset.allCases.enumerated().map { index, preset -> NSMenuItem in
+            let colorItem = item(preset.title, #selector(NoteWindowController.setPresetColor(_:)), "\(index + 1)",
+                                 tag: index)
+            colorItem.image = swatch(preset.shades)
+            return colorItem
+        }
+        func customItems(_ action: Selector, keys: Bool) -> [NSMenuItem] {
+            custom.enumerated().map { index, color in
+                let colorItem = item("Custom \(index + 1)", action, keys ? ["7", "8", "9", "0"][index] : "", tag: index)
+                colorItem.image = swatch(NoteShades(custom: color))
+                return colorItem
+            }
+        }
+        if !custom.isEmpty {
+            items += [.separator()] + customItems(#selector(AppDelegate.applyCustomColor(_:)), keys: true)
+        }
+        items += [.separator(), item("New Color…", #selector(AppDelegate.newCustomColor(_:)))]
+        if !custom.isEmpty {
+            items.append(submenu("Edit Color", customItems(#selector(AppDelegate.editCustomColor(_:)), keys: false)))
+            items.append(submenu("Remove Color", customItems(#selector(AppDelegate.removeCustomColor(_:)), keys: false)))
+        }
+        return items
     }
 
     /// 24×12 pt colour chip, the size of Stickies' swatch asset.

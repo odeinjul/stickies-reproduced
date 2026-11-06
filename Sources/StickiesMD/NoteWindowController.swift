@@ -463,15 +463,33 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSTextVi
         delegate?.noteDidChange(self)
     }
 
-    @objc func customizeColor(_ sender: Any?) {
-        textView.noteColorHandler = { [weak self] color in
-            guard let self else { return }
-            self.note.color = .custom(RGB(color))
-            self.applyColor()
-            self.delegate?.noteDidChange(self)
+    func setColor(_ color: NoteColor) {
+        note.color = color
+        applyColor()
+        delegate?.noteDidChange(self)
+    }
+
+    /// Opens the colour panel beside this note; every pick is passed to `onChange`.
+    func editColor(from color: RGB, onChange: @escaping (RGB) -> Void) {
+        textView.noteColorHandler = { onChange(RGB($0)) }
+        NSColorPanel.shared.color = color.nsColor
+        showPanel(NSColorPanel.shared)
+    }
+
+    /// Font → Show Fonts, with the panel showing this note's font.
+    @objc func showFonts(_ sender: Any?) {
+        guard let panel = NSFontManager.shared.fontPanel(true) else { return }
+        NSFontManager.shared.setSelectedFont(textView.bodyFont, isMultiple: false)
+        showPanel(panel)
+    }
+
+    /// Opens a Fonts or Colors panel right beside this note.
+    private func showPanel(_ panel: NSPanel) {
+        if let window, let visible = (window.screen ?? NSScreen.main)?.visibleFrame {
+            panel.setFrame(NoteLayout.panelFrame(size: panel.frame.size, beside: window.frame, in: visible),
+                           display: false)
         }
-        NSColorPanel.shared.color = note.color.shades.body.nsColor
-        NSColorPanel.shared.orderFront(nil)
+        panel.orderFront(nil)
     }
 
     @objc func useAsDefault(_ sender: Any?) {
@@ -502,14 +520,6 @@ extension NoteWindowController: NSMenuItemValidation {
         case #selector(setPresetColor(_:)):
             let preset = NotePreset.allCases.indices.contains(item.tag) ? NotePreset.allCases[item.tag] : nil
             item.state = preset.map { note.color == .preset($0) } == true ? .on : .off
-        case #selector(customizeColor(_:)):
-            if case .custom = note.color {
-                item.state = .on
-                item.image = MainMenu.swatch(note.color.shades)
-            } else {
-                item.state = .off
-                item.image = nil
-            }
         default:
             break
         }

@@ -1,5 +1,5 @@
 CONFIG ?= release
-VERSION = 0.1
+VERSION = 0.1.1
 APP = build/StickiesMD.app
 BIN = .build/$(CONFIG)/StickiesMD
 
@@ -39,11 +39,14 @@ docs: icon snapshot
 	cp build/AppIcon.iconset/icon_128x128@2x.png docs/icon.png
 	cp build/snapshots/preview.png docs/preview.png
 
-# A universal (Apple silicon + Intel) app, zipped for a GitHub release.
+# Two zips for a GitHub release, one per kind of Mac.
 release:
-	swift build -c release --arch arm64 --arch x86_64
-	$(MAKE) bundle BIN=.build/apple/Products/Release/StickiesMD
-	ditto -c -k --keepParent $(APP) build/StickiesMD-$(VERSION).zip
+	swift build -c release --arch arm64
+	$(MAKE) bundle BIN=.build/arm64-apple-macosx/release/StickiesMD APP=build/arm64/StickiesMD.app
+	ditto -c -k --keepParent build/arm64/StickiesMD.app build/StickiesMD-$(VERSION)-AppleSilicon.zip
+	swift build -c release --arch x86_64
+	$(MAKE) bundle BIN=.build/x86_64-apple-macosx/release/StickiesMD APP=build/x86_64/StickiesMD.app
+	ditto -c -k --keepParent build/x86_64/StickiesMD.app build/StickiesMD-$(VERSION)-Intel.zip
 
 clean:
 	rm -rf .build build

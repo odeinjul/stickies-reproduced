@@ -78,6 +78,19 @@ public enum NoteLayout {
         return frame
     }
 
+    // MARK: Fonts and Colors panels
+
+    /// Where a Fonts or Colors panel opens: top edge level with the note's, to its
+    /// right if that fits, else to its left, and always kept on screen.
+    public static func panelFrame(size: CGSize, beside note: CGRect, in visible: CGRect,
+                                  gap: CGFloat = 8) -> CGRect {
+        var x = note.maxX + gap
+        if x + size.width > visible.maxX { x = note.minX - gap - size.width }
+        x = min(max(x, visible.minX), visible.maxX - size.width)
+        let y = min(max(note.maxY - size.height, visible.minY), visible.maxY - size.height)
+        return CGRect(origin: CGPoint(x: x, y: y), size: size)
+    }
+
     // MARK: Arrange By (measured from Stickies' code)
 
     /// Collapsed bars stack from 8 pt in and 16 pt down at the top-left of the

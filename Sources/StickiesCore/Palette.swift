@@ -99,6 +99,9 @@ public enum NotePreset: String, CaseIterable, Codable {
     }
 }
 
+/// The Color menu keeps up to this many saved colours, on ⌘7, ⌘8, ⌘9 and ⌘0.
+public let maxCustomColors = 4
+
 /// A note's colour: a preset, or a custom body colour from the colour panel.
 /// Encoded as the preset name (`"yellow"`) or `#RRGGBB`.
 public enum NoteColor: Equatable {

@@ -133,9 +133,9 @@ Clone: same alert and folder-per-colour layout. Formatted notes go as `.rtf`, so
 
 ### Shortcuts
 
-From Stickies' menus: ⌘N new · ⌘W close · ⌘P print · ⌘T fonts · ⇧⌘C colours · ⌘1–⌘6 colours (menu shows a swatch and a checkmark on the current one) · ⌘M Collapse · ⇧⌘M Zoom · ⌥⌘F Float on Top · ⌥⌘T Translucent. Import/Export Text have no shortcut. "Use as Default" lives in the Window menu. The Window menu lists every note with its colour swatch.
+From Stickies' menus: ⌘N new · ⌘W close · ⌘P print · ⌘T fonts · ⇧⌘C colours · ⌘1–⌘6 colours (menu shows a swatch and a checkmark on the current one) · ⌘7–⌘0 up to four saved colours of your own: Color → New Color… saves the note's colour as a new slot and edits it live in the colour panel; Edit Color ▸ adjusts one (every note using it follows); Remove Color ▸ frees a slot (notes keep their colour) · ⌘M Collapse · ⇧⌘M Zoom · ⌥⌘F Float on Top · ⌥⌘T Translucent. Import/Export Text have no shortcut. "Use as Default" lives in the Window menu. The Window menu lists every note with its colour swatch.
 
-Font menu: Show Fonts ⌘T, Bold ⌘B (`**`), Italic ⌘I (`*`), Underline ⌘U (`<u>`), Strikethrough (`~~`) · Bigger ⌘+, Smaller ⌘−. With a selection they wrap or unwrap it; with none they insert a pair.
+The Fonts and Colors panels open beside the note being edited, top edges level, to its right if there's room (else its left), kept on screen. Font menu: Show Fonts ⌘T, Bold ⌘B (`**`), Italic ⌘I (`*`), Underline ⌘U (`<u>`), Strikethrough (`~~`) · Bigger ⌘+, Smaller ⌘−. With a selection they wrap or unwrap it; with none they insert a pair.
 
 ## 5. Later: basic Markdown (WYSIWYG)
 

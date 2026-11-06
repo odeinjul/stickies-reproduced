@@ -1,0 +1,56 @@
+name: Website version
+
+# When a release is published, point the website (gh-pages) at its version and downloads.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag, e.g. v0.1.1
+        required: true
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Check the release has both downloads
+        run: |
+          VERSION="${TAG#v}"
+          for attempt in 1 2 3 4 5 6; do
+            ASSETS=$(gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name')
+            if grep -qx "StickiesMD-$VERSION-AppleSilicon.zip" <<<"$ASSETS" && grep -qx "StickiesMD-$VERSION-Intel.zip" <<<"$ASSETS"; then
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Release $TAG needs StickiesMD-$VERSION-AppleSilicon.zip and StickiesMD-$VERSION-Intel.zip"
+          exit 1
+
+      - name: Update version and links
+        run: |
+          VERSION="${TAG#v}"
+          sed -i -E "s#releases/download/v[0-9.]+/StickiesMD-[0-9.]+-#releases/download/$TAG/StickiesMD-$VERSION-#g; s#Version [0-9.]+ ·#Version $VERSION ·#" index.html
+          grep -q "Version $VERSION ·" index.html
+          grep -q "releases/download/$TAG/StickiesMD-$VERSION-AppleSilicon.zip" index.html
+
+      - name: Publish
+        run: |
+          VERSION="${TAG#v}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then echo "Already on $VERSION"; exit 0; fi
+          git commit -am "Website: version $VERSION"
+          git push
+          gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" >/dev/null || true

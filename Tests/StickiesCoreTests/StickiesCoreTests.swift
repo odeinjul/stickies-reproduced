@@ -683,3 +683,46 @@ final class WelcomeTests: XCTestCase {
         XCTAssertTrue(store.hasSavedNotes, "deleting every note later doesn't bring the welcome notes back")
     }
 }
+
+final class PanelPlacementTests: XCTestCase {
+    private let screen = CGRect(x: 0, y: 0, width: 1440, height: 900)
+    private let panel = CGSize(width: 400, height: 300)
+
+    func testOpensToTheRightWithTopsLevel() {
+        let note = CGRect(x: 100, y: 500, width: 300, height: 200)
+        XCTAssertEqual(NoteLayout.panelFrame(size: panel, beside: note, in: screen),
+                       CGRect(x: 408, y: 400, width: 400, height: 300))
+    }
+
+    func testFlipsLeftNearTheRightEdge() {
+        let note = CGRect(x: 1100, y: 500, width: 300, height: 200)
+        XCTAssertEqual(NoteLayout.panelFrame(size: panel, beside: note, in: screen).minX, 692)
+    }
+
+    func testStaysOnScreen() {
+        let low = NoteLayout.panelFrame(size: panel, beside: CGRect(x: 100, y: 0, width: 300, height: 50), in: screen)
+        XCTAssertEqual(low.minY, 0, "a note near the bottom pushes the panel up")
+        let wide = NoteLayout.panelFrame(size: panel, beside: CGRect(x: 0, y: 500, width: 1440, height: 200), in: screen)
+        XCTAssertTrue(screen.contains(wide), "no room either side: kept on screen")
+    }
+}
+
+final class CustomColorTests: XCTestCase {
+    func testSavedColoursRoundTripAndOlderFilesLoad() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = NoteStore(directory: directory)
+        let colors = [RGB(hex: "#C0FFEE")!, RGB(hex: "#FFB000")!]
+        try store.save(notes: [], defaults: NoteDefaults(), customColors: colors)
+        XCTAssertEqual(try store.load().customColors, colors)
+
+        // notes.json from before saved colours existed.
+        try #"{"version":1,"defaults":{"color":"yellow","fontName":"Helvetica","fontSize":12,"isFloating":false,"isTranslucent":false,"size":[300,200]},"notes":[]}"#
+            .write(to: directory.appendingPathComponent("notes.json"), atomically: true, encoding: .utf8)
+        XCTAssertEqual(try store.load().customColors, [])
+    }
+
+    func testFourSlotsForCommandSevenToZero() {
+        XCTAssertEqual(maxCustomColors, 4)
+    }
+}

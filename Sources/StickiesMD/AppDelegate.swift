@@ -4,6 +4,8 @@ import StickiesCore
 final class AppDelegate: NSObject, NSApplicationDelegate, NoteWindowControllerDelegate {
     private let store: NoteStore
     private var defaults = NoteDefaults()
+    /// The Color menu's saved colours (⌘7–⌘0).
+    private var customColors: [RGB] = []
     private var controllers: [NoteWindowController] = []
     private var pendingSave: DispatchWorkItem?
     /// Off when loading failed, so a broken index is never overwritten.
@@ -19,9 +21,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NoteWindowControllerDe
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.mainMenu = MainMenu.build()
+        reloadColorMenu()
         do {
             let loaded = try store.load()
             defaults = loaded.defaults
+            customColors = loaded.customColors
             loaded.notes.forEach(show)
         } catch {
             canSave = false
@@ -141,6 +145,63 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NoteWindowControllerDe
         controllers.forEach { $0.window?.orderFront(nil) }
     }
 
+    // MARK: - Saved colours
+
+    /// The note the Color menu acts on: the focused one, or the last focused while a panel is open.
+    private var currentNote: NoteWindowController? {
+        for window in [NSApp.keyWindow, NSApp.mainWindow] {
+            if let note = controllers.first(where: { $0.window === window }) { return note }
+        }
+        return nil
+    }
+
+    private func reloadColorMenu() {
+        guard let menu = NSApp.mainMenu?.item(withTitle: "Color")?.submenu else { return }
+        menu.removeAllItems()
+        MainMenu.colorItems(custom: customColors).forEach(menu.addItem)
+    }
+
+    @objc func applyCustomColor(_ sender: NSMenuItem) {
+        guard customColors.indices.contains(sender.tag) else { return }
+        currentNote?.setColor(.custom(customColors[sender.tag]))
+    }
+
+    /// Saves the note's colour as a new slot, then edits it.
+    @objc func newCustomColor(_ sender: Any?) {
+        guard let note = currentNote, customColors.count < maxCustomColors else { return }
+        customColors.append(note.note.color.shades.body)
+        reloadColorMenu()
+        note.setColor(.custom(customColors[customColors.count - 1]))
+        edit(slot: customColors.count - 1, in: note)
+    }
+
+    @objc func editCustomColor(_ sender: NSMenuItem) {
+        guard let note = currentNote, customColors.indices.contains(sender.tag) else { return }
+        edit(slot: sender.tag, in: note)
+    }
+
+    @objc func removeCustomColor(_ sender: NSMenuItem) {
+        guard customColors.indices.contains(sender.tag) else { return }
+        customColors.remove(at: sender.tag)
+        reloadColorMenu()
+        scheduleSave()
+    }
+
+    /// Live edits from the colour panel; every note using the colour follows it.
+    private func edit(slot: Int, in note: NoteWindowController) {
+        note.editColor(from: customColors[slot]) { [weak self] picked in
+            guard let self, self.customColors.indices.contains(slot) else { return }
+            let old = self.customColors[slot]
+            guard picked != old else { return }
+            self.customColors[slot] = picked
+            for controller in self.controllers where controller.note.color == .custom(old) {
+                controller.setColor(.custom(picked))
+            }
+            self.reloadColorMenu()
+            self.scheduleSave()
+        }
+    }
+
     // MARK: - Find
 
     @objc func showFindPanel(_ sender: Any?) { finder.show() }
@@ -231,7 +292,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NoteWindowControllerDe
         pendingSave = nil
         guard canSave else { return }
         do {
-            try store.save(notes: controllers.map(\.note), defaults: defaults)
+            try store.save(notes: controllers.map(\.note), defaults: defaults, customColors: customColors)
         } catch {
             NSLog("Stickies MD: save failed: \(error)")
         }
@@ -243,6 +304,14 @@ extension AppDelegate: NSMenuItemValidation {
         switch item.action {
         case #selector(undoArrange(_:)): return arrangeUndo != nil
         case #selector(redoArrange(_:)): return arrangeRedo != nil
+        case #selector(applyCustomColor(_:)):
+            let color = customColors.indices.contains(item.tag) ? customColors[item.tag] : nil
+            item.state = color.map { currentNote?.note.color == .custom($0) } == true ? .on : .off
+            return currentNote != nil
+        case #selector(newCustomColor(_:)):
+            return currentNote != nil && customColors.count < maxCustomColors
+        case #selector(editCustomColor(_:)):
+            return currentNote != nil
         case #selector(arrangeNotes(_:)), #selector(findNext(_:)), #selector(findPrevious(_:)),
              #selector(useSelectionForFind(_:)), #selector(jumpToSelection(_:)):
             return !controllers.isEmpty
