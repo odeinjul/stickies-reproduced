@@ -2,7 +2,7 @@
 
 # Stickies MD
 
-Apple's Stickies, but in Markdown.
+Apple's Stickies in Markdown.
 
 ![Stickies MD notes on a desktop](docs/preview.png)
 
