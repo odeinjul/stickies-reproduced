@@ -55,12 +55,7 @@
   .meta a { color: inherit; }
   figure { margin: 48px -24px; }
   figure img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--rule); }
-  .lists { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-  h2 { margin: 0 0 8px; font-size: 17px; font-weight: 600; }
-  ul { margin: 0; padding-left: 1.1em; }
-  li { margin: 4px 0; }
-  .note { margin: 40px 0 0; padding-top: 20px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 15px; }
-  footer { margin-top: 40px; color: var(--muted); font-size: 14px; }
+  footer { margin-top: 8px; color: var(--muted); font-size: 14px; }
   footer a { color: inherit; }
   @media (min-width: 760px) { figure { margin-left: -60px; margin-right: -60px; } }
   @media (max-width: 560px) {
@@ -68,7 +63,6 @@
     header { align-items: flex-start; }
     header img { width: 64px; height: 64px; }
     h1 { font-size: 28px; }
-    .lists { grid-template-columns: 1fr; gap: 24px; }
     figure { margin: 36px 0; }
   }
 </style>
@@ -86,35 +80,13 @@
   <div class="downloads">
     <a class="primary" href="https://github.com/odeinjul/stickies-reproduced/releases/download/v0.1/StickiesMD-0.1-AppleSilicon.zip">Download for Apple silicon</a>
     <a href="https://github.com/odeinjul/stickies-reproduced/releases/download/v0.1/StickiesMD-0.1-Intel.zip">Intel</a>
-    <a href="https://github.com/odeinjul/stickies-reproduced">Source on GitHub</a>
+    <a href="https://github.com/odeinjul/stickies-reproduced">Source</a>
   </div>
   <p class="meta">Version 0.1 · macOS 13 or later · Free, <a href="https://github.com/odeinjul/stickies-reproduced/blob/main/LICENSE">MIT licensed</a></p>
 
   <figure>
     <img src="preview.png" width="1740" height="1016" alt="Four notes on a desktop: a yellow welcome note in front of a blue one, a green note with a checklist, and a collapsed purple note.">
   </figure>
-
-  <div class="lists">
-    <section>
-      <h2>What it does</h2>
-      <ul>
-        <li>Stickies' notes: six colours, float on top, translucent, collapse, zoom, arrange</li>
-        <li>Markdown, previewed as you type, with checkboxes you can click</li>
-        <li>Find across notes; export to Markdown, text, RTF or Apple Notes</li>
-        <li>Each note saved as a plain <code>.md</code> file</li>
-      </ul>
-    </section>
-    <section>
-      <h2>What it doesn't</h2>
-      <ul>
-        <li>Rich text: no text colours or per-word fonts</li>
-        <li>Pictures or attachments</li>
-        <li>Sync between Macs</li>
-      </ul>
-    </section>
-  </div>
-
-  <p class="note">The app isn't notarized, so macOS blocks the first open. On macOS 15 or later, click Done, then go to System Settings → Privacy &amp; Security and click Open Anyway. On macOS 13 or 14, right-click the app and choose Open.</p>
 
   <footer>
     Made by <a href="https://github.com/odeinjul">@odeinjul</a> with Claude Opus 5.5. Not affiliated with Apple.
