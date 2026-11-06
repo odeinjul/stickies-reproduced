@@ -175,7 +175,9 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSTextVi
         let style = note.markdownStyle
         editingLines = editingRange
         MarkdownRenderer.render(storage, style: style, editing: editingLines, lines: lines)
-        editedLines = nil
+        // Bullets and checkboxes are drawn in the margin, which AppKit doesn't repaint on its
+        // own when text changes; repaint whole lines so old ones don't linger.
+        textView.setNeedsDisplay(textView.visibleRect)
         textView.typingAttributes = [.font: style.font, .foregroundColor: style.textColor]
     }
 
@@ -256,6 +258,7 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSTextVi
         // Just the edited lines, unless a code fence opened or closed (that restyles what follows).
         let fences = MarkdownRenderer.fenceCount(in: note.text)
         render(lines: fences == fenceCount ? editedLines : nil)
+        editedLines = nil
         fenceCount = fences
         note.modified = Date()
         if note.isCollapsed { spine.titleField.stringValue = NoteTitle.of(note.text) }
@@ -323,10 +326,19 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSTextVi
     }
 
     /// Moving to another line hides the markers of the line left and shows the new one's.
+    /// Typing only changes the selected line's length, which needs no restyle here
+    /// (the edit itself restyles it), so lines are compared by where they start.
     func textViewDidChangeSelection(_ notification: Notification) {
         let previous = editingLines
-        guard editingRange != previous else { return }
+        guard lineStarts(editingRange) != lineStarts(previous) else { return }
         for lines in [previous, editingRange].compactMap({ $0 }) { render(lines: lines) }
+    }
+
+    private func lineStarts(_ range: NSRange?) -> [Int]? {
+        guard let range else { return nil }
+        let string = textView.string as NSString
+        let lastCharacter = min(max(range.location, NSMaxRange(range) - 1), string.length)
+        return [range.location, string.lineRange(for: NSRange(location: lastCharacter, length: 0)).location]
     }
     func windowDidMove(_ notification: Notification) { captureFrame() }
     func windowDidResize(_ notification: Notification) { captureFrame() }
