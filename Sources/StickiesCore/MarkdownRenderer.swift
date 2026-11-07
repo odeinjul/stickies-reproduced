@@ -5,6 +5,10 @@ public extension NSAttributedString.Key {
     static let markdownHidden = NSAttributedString.Key("StickiesMarkdownHidden")
     /// What `MarkdownLayoutManager` draws in place of a hidden block marker.
     static let markdownDecoration = NSAttributedString.Key("StickiesMarkdownDecoration")
+    /// The colour and font to draw it with: the marker's own are hidden, and an empty
+    /// item has no text to borrow them from.
+    static let markdownDecorationColor = NSAttributedString.Key("StickiesMarkdownDecorationColor")
+    static let markdownDecorationFont = NSAttributedString.Key("StickiesMarkdownDecorationFont")
 }
 
 public enum MarkdownDecoration: String {
@@ -36,6 +40,15 @@ public struct MarkdownStyle {
     var dimColor: NSColor { textColor.withAlphaComponent(0.55) }
     var codeBackground: NSColor { NSColor.black.withAlphaComponent(0.06) }
     var hiddenFont: NSFont { NSFont.systemFont(ofSize: 0.01) }
+
+    /// Every line is at least one body line tall, so a line made only of hidden
+    /// markers (an empty list item, a bare "# ") can't collapse.
+    var paragraph: NSMutableParagraphStyle {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.minimumLineHeight = Self.metrics.defaultLineHeight(for: font)
+        return paragraph
+    }
+    private static let metrics = NSLayoutManager()
 }
 
 extension Note {
@@ -96,7 +109,7 @@ public enum MarkdownRenderer {
         }
         storage.beginEditing()
         storage.setAttributes([.font: style.font, .foregroundColor: style.textColor,
-                               .paragraphStyle: NSParagraphStyle.default], range: range)
+                               .paragraphStyle: style.paragraph], range: range)
         var location = range.location
         while location < NSMaxRange(range) {
             let lineRange = string.lineRange(for: NSRange(location: location, length: 0))
@@ -151,8 +164,9 @@ public enum MarkdownRenderer {
             result.replaceCharacters(in: range, with: NSAttributedString(string: replacement, attributes: attributes))
         }
         let all = NSRange(location: 0, length: result.length)
-        result.removeAttribute(.markdownHidden, range: all)
-        result.removeAttribute(.markdownDecoration, range: all)
+        for key in [NSAttributedString.Key.markdownHidden, .markdownDecoration, .markdownDecorationColor, .markdownDecorationFont] {
+            result.removeAttribute(key, range: all)
+        }
         return result
     }
 
@@ -308,7 +322,11 @@ public enum MarkdownRenderer {
             guard range.length > 0 else { return }
             storage.addAttributes([.font: style.hiddenFont, .foregroundColor: NSColor.clear, .markdownHidden: true],
                                   range: range)
-            if let decoration { storage.addAttribute(.markdownDecoration, value: decoration.rawValue, range: range) }
+            if let decoration {
+                let color = decoration == .bullet || decoration == .unchecked ? style.textColor : style.dimColor
+                storage.addAttributes([.markdownDecoration: decoration.rawValue, .markdownDecorationColor: color,
+                                       .markdownDecorationFont: style.font], range: range)
+            }
         }
 
         func convert(_ range: NSRange, trait: NSFontTraitMask) {
@@ -319,7 +337,7 @@ public enum MarkdownRenderer {
         }
 
         func paragraphIndent(first: CGFloat, head: CGFloat) {
-            let paragraphStyle = NSMutableParagraphStyle()
+            let paragraphStyle = style.paragraph
             paragraphStyle.firstLineHeadIndent = first
             paragraphStyle.headIndent = head
             // Hidden nesting tabs would still jump to a tab stop; the indent does the nesting.
@@ -358,10 +376,10 @@ public final class MarkdownLayoutManager: NSLayoutManager {
         let line = lineFragmentRect(forGlyphAt: markerGlyph, effectiveRange: nil)
         let paragraph = storage.attribute(.paragraphStyle, at: markerRange.location, effectiveRange: nil) as? NSParagraphStyle
         let contentIndex = min(NSMaxRange(markerRange), storage.length - 1)
-        let font = (storage.attribute(.font, at: contentIndex, effectiveRange: nil) as? NSFont)
-            .flatMap { $0.pointSize < 1 ? nil : $0 } ?? NSFont.systemFont(ofSize: 12)
-        let color = (storage.attribute(.foregroundColor, at: contentIndex, effectiveRange: nil) as? NSColor)
-            .flatMap { $0.alphaComponent == 0 ? nil : $0 } ?? .textColor
+        let font = storage.attribute(.markdownDecorationFont, at: markerRange.location, effectiveRange: nil) as? NSFont
+            ?? NSFont.systemFont(ofSize: 12)
+        let color = storage.attribute(.markdownDecorationColor, at: markerRange.location, effectiveRange: nil) as? NSColor
+            ?? .textColor
         let baseline = origin.y + line.minY + location(forGlyphAt: glyphIndexForCharacter(at: contentIndex)).y
         let gutter = origin.x + line.minX + (paragraph?.headIndent ?? MarkdownStyle.indent)
         // Where the marker's text would start if shown: drawn shapes sit exactly
@@ -369,7 +387,14 @@ public final class MarkdownLayoutManager: NSLayoutManager {
         let marker = (storage.string as NSString).substring(with: markerRange)
         func width(_ text: String) -> CGFloat { (text as NSString).size(withAttributes: [.font: font]).width }
         let markerStart = gutter - width(marker)
-        let midY = baseline - font.capHeight / 2
+        // An item with nothing after its marker has no text to line up with: centre it in its line.
+        let string = storage.string as NSString
+        var fullMarker = NSRange()
+        _ = storage.attribute(.markdownDecoration, at: markerRange.location, longestEffectiveRange: &fullMarker,
+                              in: string.lineRange(for: markerRange))
+        let end = NSMaxRange(fullMarker)
+        let empty = end == string.length || [10, 13].contains(string.character(at: end))
+        let midY = empty ? origin.y + line.midY : baseline - font.capHeight / 2
 
         switch decoration {
         case .bullet:

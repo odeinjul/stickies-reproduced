@@ -726,3 +726,19 @@ final class CustomColorTests: XCTestCase {
         XCTAssertEqual(maxCustomColors, 4)
     }
 }
+
+extension RendererTests {
+    /// An empty item ("- [x] " with nothing after it) is all hidden markers; it must keep
+    /// its height and know how to draw its box.
+    func testEmptyItemKeepsItsLine() {
+        let storage = NSTextStorage(string: "- [x] Internship\n- [x] ")
+        let style = MarkdownStyle(font: NSFont(name: "Helvetica", size: 12)!)
+        MarkdownRenderer.render(storage, style: style, editing: nil)
+        let last = storage.length - 1
+        let paragraph = storage.attribute(.paragraphStyle, at: last, effectiveRange: nil) as? NSParagraphStyle
+        XCTAssertGreaterThan(paragraph?.minimumLineHeight ?? 0, 12)
+        XCTAssertNotNil(storage.attribute(.markdownDecorationFont, at: last, effectiveRange: nil))
+        let color = storage.attribute(.markdownDecorationColor, at: last, effectiveRange: nil) as? NSColor
+        XCTAssertEqual(color?.alphaComponent ?? 1, 0.55, accuracy: 0.01, "ticked items draw dimmed")
+    }
+}
