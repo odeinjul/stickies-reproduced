@@ -7,7 +7,7 @@ enum Snapshot {
     static let sample = "Groceries\n- milk\n- eggs\nCall Sam at 5"
     static let markdownSample = """
         # Groceries
-        - [ ] milk
+        - [ ] **milk**
         - [x] eggs
         - bread
         \t- rye

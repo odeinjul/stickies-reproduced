@@ -589,6 +589,22 @@ final class EditingTests: XCTestCase {
         MarkdownEditing.toggleWrap("*", "*", in: view)
         XCTAssertEqual(view.string, "***bold***", "italic inside bold, not unwrapping it")
 
+        set("- [ ] Internship\n"); view.setSelectedRange(NSRange(location: 0, length: 17))
+        MarkdownEditing.toggleWrap("**", "**", in: view)
+        XCTAssertEqual(view.string, "- [ ] **Internship**\n", "the checkbox stays outside")
+        XCTAssertEqual(view.selectedRange(), NSRange(location: 8, length: 10))
+
+        set("# Todo\n- a\n\t1. b"); view.selectAll(nil)
+        MarkdownEditing.toggleWrap("**", "**", in: view)
+        XCTAssertEqual(view.string, "# **Todo**\n- **a**\n\t1. **b**", "each line on its own")
+        XCTAssertEqual(view.selectedRange(), NSRange(location: 4, length: 22))
+        MarkdownEditing.toggleWrap("**", "**", in: view)
+        XCTAssertEqual(view.string, "# Todo\n- a\n\t1. b")
+
+        set("**- [ ] Internship**"); view.selectAll(nil)
+        MarkdownEditing.toggleWrap("**", "**", in: view)
+        XCTAssertEqual(view.string, "- [ ] Internship", "a line bolded whole unwraps back to a task")
+
         set("x"); MarkdownEditing.toggleWrap("~~", "~~", in: view)
         XCTAssertEqual(view.string, "x~~~~")
         XCTAssertEqual(view.selectedRange().location, 3)

@@ -84,36 +84,63 @@ public enum MarkdownEditing {
 
     /// Bold, Italic, Underline, Strikethrough: wraps the selection in markers, or
     /// unwraps it when already wrapped. With no selection, inserts a pair and puts
-    /// the insertion point between.
+    /// the insertion point between. Each line is wrapped on its own, after its list,
+    /// quote or heading marker, so the line keeps its checkbox or bullet.
     public static func toggleWrap(_ open: String, _ close: String, in view: NSTextView) {
         let selection = view.selectedRange()
+        if selection.length == 0 {
+            replace(selection, with: open + close, in: view,
+                    select: NSRange(location: selection.location + (open as NSString).length, length: 0))
+            return
+        }
+        let string = view.string as NSString
+        var parts: [NSRange] = []
+        string.enumerateSubstrings(in: string.lineRange(for: selection), options: [.byLines, .substringNotRequired]) { _, line, _, _ in
+            let marker = listPrefix(of: line, in: string)?.prefix
+                ?? MarkdownRenderer.heading.firstMatch(in: string as String, range: line)?.range
+            var start = max(NSMaxRange(marker ?? NSRange(location: line.location, length: 0)), selection.location)
+            var end = min(NSMaxRange(line), NSMaxRange(selection))
+            while start < end, [9, 32].contains(string.character(at: start)) { start += 1 }
+            while end > start, [9, 32].contains(string.character(at: end - 1)) { end -= 1 }
+            if end > start { parts.append(NSRange(location: start, length: end - start)) }
+        }
+        // Last line first, so earlier ranges stay put; then select from the first line to the last.
+        var first = selection, last = selection, lengthAfterLast = 0
+        for (index, part) in parts.enumerated().reversed() {
+            first = toggleWrap(open, close, part, in: view)
+            if index == parts.count - 1 { last = first; lengthAfterLast = (view.string as NSString).length }
+        }
+        guard !parts.isEmpty else { return }
+        let end = NSMaxRange(last) + (view.string as NSString).length - lengthAfterLast
+        view.setSelectedRange(NSRange(location: first.location, length: end - first.location))
+    }
+
+    /// Toggles the markers around one line's text and returns where that text is now.
+    private static func toggleWrap(_ open: String, _ close: String, _ text: NSRange, in view: NSTextView) -> NSRange {
         let string = view.string as NSString
         let openLength = (open as NSString).length
         let closeLength = (close as NSString).length
-        if selection.length == 0 {
-            replace(selection, with: open + close, in: view,
-                    select: NSRange(location: selection.location + openLength, length: 0))
-            return
+        // Take in markers just outside the text, but not a "*" that is half of "**".
+        func isMarker(_ marker: String, at location: Int) -> Bool {
+            let length = (marker as NSString).length
+            func has(_ text: String, at location: Int) -> Bool {
+                location >= 0 && location + length <= string.length
+                    && string.substring(with: NSRange(location: location, length: length)) == text
+            }
+            return has(marker, at: location) && (length > 1 || !(has(marker, at: location - 1) || has(marker, at: location + 1)))
         }
-        let selected = string.substring(with: selection)
-        let before = NSRange(location: selection.location - openLength, length: openLength)
-        let after = NSRange(location: NSMaxRange(selection), length: closeLength)
-        // A lone "*" next to "**" is bold, not italic.
-        let partOfLonger = open.count == 1 && before.location > 0
-            && string.substring(with: NSRange(location: before.location - 1, length: 1)) == open
-        if before.location >= 0, NSMaxRange(after) <= string.length, !partOfLonger,
-           string.substring(with: before) == open, string.substring(with: after) == close {
-            replace(NSRange(location: before.location, length: NSMaxRange(after) - before.location), with: selected,
-                    in: view, select: NSRange(location: before.location, length: selection.length))
-        } else if selected.hasPrefix(open), selected.hasSuffix(close), selection.length >= openLength + closeLength {
+        var range = text
+        if isMarker(open, at: range.location - openLength) { range.location -= openLength; range.length += openLength }
+        if isMarker(close, at: NSMaxRange(range)) { range.length += closeLength }
+        let selected = string.substring(with: range)
+        if selected.hasPrefix(open), selected.hasSuffix(close), range.length >= openLength + closeLength {
             let inner = (selected as NSString).substring(with: NSRange(location: openLength,
-                                                                       length: selection.length - openLength - closeLength))
-            replace(selection, with: inner, in: view,
-                    select: NSRange(location: selection.location, length: (inner as NSString).length))
-        } else {
-            replace(selection, with: open + selected + close, in: view,
-                    select: NSRange(location: selection.location + openLength, length: selection.length))
+                                                                       length: range.length - openLength - closeLength))
+            replace(range, with: inner, in: view)
+            return NSRange(location: range.location, length: (inner as NSString).length)
         }
+        replace(text, with: open + string.substring(with: text) + close, in: view)
+        return NSRange(location: text.location + openLength, length: text.length)
     }
 
     /// Ticks or unticks the checkbox of the line around `index`. False if it isn't a checklist line.
