@@ -39,7 +39,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NoteWindowControllerDe
         // Writes notes converted from older .rtf/.txt files out as .md right away.
         scheduleSave()
         NSApp.activate(ignoringOtherApps: true)
+        NotificationCenter.default.addObserver(self, selector: #selector(screensDidChange),
+                                               name: NSApplication.didChangeScreenParametersNotification, object: nil)
     }
+
+    /// Notes left on a display that went away come back to the main screen.
+    @objc private func screensDidChange(_ notification: Notification) {
+        controllers.forEach { $0.keepOnScreen(visibleScreens, size: defaults.size) }
+    }
+
+    /// Each screen's visible frame, the menu-bar screen first.
+    private var visibleScreens: [CGRect] { NSScreen.screens.map(\.visibleFrame) }
 
     func applicationWillTerminate(_ notification: Notification) {
         saveNow()
@@ -52,7 +62,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NoteWindowControllerDe
 
     // MARK: - Notes
 
+    /// Opens a note, first moving it on screen if its saved place can't be seen.
     private func show(_ note: Note) {
+        var note = note
+        note.frame = NoteLayout.onScreen(note.frame, screens: visibleScreens, size: defaults.size)
         let controller = NoteWindowController(note: note)
         controller.delegate = self
         controllers.append(controller)

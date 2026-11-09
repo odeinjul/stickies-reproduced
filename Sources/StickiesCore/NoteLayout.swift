@@ -78,6 +78,25 @@ public enum NoteLayout {
         return frame
     }
 
+    // MARK: Keeping notes on screen
+
+    /// Rescues a note that would be lost: a frame too small to see gets `size`, and
+    /// a note whose bar no screen shows (a display was unplugged) moves onto
+    /// `screens[0]`. A note just hanging off an edge stays where it is.
+    public static func onScreen(_ frame: CGRect, screens: [CGRect], size: CGSize) -> CGRect {
+        var frame = frame
+        if frame.width < minSize.width || frame.height < minSize.height { frame.size = size }
+        let bar = collapsedFrame(from: frame)
+        let barShows = screens.contains { screen in
+            let overlap = screen.intersection(bar)
+            return overlap.width >= minSize.width && overlap.height > 0
+        }
+        guard !barShows, let visible = screens.first else { return frame }
+        frame.origin.x = max(min(frame.minX, visible.maxX - frame.width), visible.minX)
+        frame.origin.y = min(max(frame.minY, visible.minY), visible.maxY - frame.height)
+        return frame
+    }
+
     // MARK: Fonts and Colors panels
 
     /// Where a Fonts or Colors panel opens: top edge level with the note's, to its

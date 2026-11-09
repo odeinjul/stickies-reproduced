@@ -415,6 +415,28 @@ final class ArrangeTests: XCTestCase {
         XCTAssertEqual(frames[3].minY, 108)
         XCTAssertEqual(frames[4], CGRect(x: 208, y: 144, width: 300, height: 12))
     }
+
+    /// A 0 × 0 saved frame and a note left on an unplugged display both come back.
+    func testLostNotesComeBackOnScreen() {
+        let laptop = CGRect(x: 0, y: 0, width: 1800, height: 1125)
+        let monitor = CGRect(x: 1800, y: 650, width: 1920, height: 1200)
+        let size = CGSize(width: 300, height: 200)
+        let fine = CGRect(x: 100, y: 500, width: 300, height: 200)
+        XCTAssertEqual(NoteLayout.onScreen(fine, screens: [laptop], size: size), fine)
+        let hanging = CGRect(x: -200, y: -150, width: 300, height: 200)
+        XCTAssertEqual(NoteLayout.onScreen(hanging, screens: [laptop], size: size), hanging, "bar still shows")
+        let onMonitor = CGRect(x: 2000, y: 1200, width: 300, height: 200)
+        XCTAssertEqual(NoteLayout.onScreen(onMonitor, screens: [laptop, monitor], size: size), onMonitor)
+        XCTAssertEqual(NoteLayout.onScreen(onMonitor, screens: [laptop], size: size),
+                       CGRect(x: 1500, y: 925, width: 300, height: 200), "monitor unplugged")
+        XCTAssertEqual(NoteLayout.onScreen(CGRect(x: -4, y: -10, width: 0, height: 0), screens: [laptop], size: size),
+                       CGRect(x: -4, y: -10, width: 300, height: 200), "shrunk to nothing")
+        let barUnderMenu = CGRect(x: 100, y: 940, width: 300, height: 200)
+        XCTAssertEqual(NoteLayout.onScreen(barUnderMenu, screens: [laptop], size: size).maxY, 1125)
+        let huge = CGRect(x: 3000, y: 2000, width: 2000, height: 1500)
+        XCTAssertEqual(NoteLayout.onScreen(huge, screens: [laptop], size: size),
+                       CGRect(x: 0, y: -375, width: 2000, height: 1500), "top-left stays on screen")
+    }
 }
 
 final class SearchTests: XCTestCase {

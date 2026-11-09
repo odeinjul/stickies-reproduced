@@ -236,6 +236,9 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSTextVi
 
     private func captureFrame() {
         guard let window, !isApplyingFrame else { return }
+        // Never save a window AppKit has shrunk to nothing (a 0 × 0 note was seen).
+        guard window.frame.width >= NoteLayout.minSize.width,
+              note.isCollapsed || window.frame.height >= NoteLayout.minSize.height else { return }
         if note.isCollapsed {
             // Keep the expanded height; follow the bar's top edge.
             note.frame = NoteLayout.expandedFrame(from: window.frame, height: note.frame.height)
@@ -312,6 +315,17 @@ final class NoteWindowController: NSWindowController, NSWindowDelegate, NSTextVi
             applyCollapse(animate: false)
         }
         window.setFrame(frame, display: true)
+        delegate?.noteDidChange(self)
+    }
+
+    /// Brings the note back when no screen shows its bar, e.g. after a display is unplugged.
+    func keepOnScreen(_ screens: [CGRect], size: CGSize) {
+        guard let window else { return }
+        let current = note.isCollapsed ? note.frame : window.frame
+        let fixed = NoteLayout.onScreen(current, screens: screens, size: size)
+        guard fixed != current else { return }
+        note.frame = fixed
+        window.setFrame(note.isCollapsed ? NoteLayout.collapsedFrame(from: fixed) : fixed, display: true)
         delegate?.noteDidChange(self)
     }
 
